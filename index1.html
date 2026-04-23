@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suporte TI N1 | Atendimento Remoto</title>
+  <meta name="description" content="Suporte de TI remoto rápido para usuários e pequenas empresas. Atendimento imediato via WhatsApp.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {margin:0; padding:0; box-sizing:border-box;}
+    body {font-family:'Inter', sans-serif; background:#f4f6f9; color:#333;}
+
+    header {background:#0d47a1; color:white; padding:20px 40px; display:flex; justify-content:space-between; align-items:center;}
+    nav a {color:white; margin-left:20px; text-decoration:none; font-weight:600;}
+
+    .hero {background:linear-gradient(120deg,#0d47a1,#1976d2); color:white; padding:90px 20px; text-align:center;}
+    .hero h1 {font-size:2.8rem; margin-bottom:15px;}
+    .hero p {font-size:1.2rem; margin-bottom:25px;}
+
+    .btn {background:#ff9800; color:white; padding:10px 16px; border:none; border-radius:8px; text-decoration:none; font-weight:bold; cursor:pointer;}
+    .btn:hover {background:#e68900;}
+
+    .container {padding:60px 20px; max-width:1200px; margin:auto;}
+    h2 {text-align:center; margin-bottom:30px;}
+
+    .cards {display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:25px;}
+
+    .card {background:white; padding:25px; border-radius:15px; box-shadow:0 10px 25px rgba(0,0,0,0.08);}
+    .card h3 {color:#0d47a1; margin-bottom:10px;}
+
+    .contact-box {background:#e3f2fd; padding:40px; border-radius:15px;}
+
+    input, textarea, select {width:100%; padding:10px; margin-top:10px; border-radius:8px; border:1px solid #ccc;}
+
+    footer {background:#0d47a1; color:white; text-align:center; padding:25px;}
+
+    .whatsapp {position:fixed; bottom:20px; right:20px; background:#25D366; color:white; padding:15px; border-radius:50%; font-size:20px; text-decoration:none;}
+
+    .dashboard {background:white; padding:20px; border-radius:15px; box-shadow:0 10px 25px rgba(0,0,0,0.08);}    
+    .stats {display:flex; gap:15px; flex-wrap:wrap; margin-bottom:20px;}
+    .stat {flex:1; min-width:150px; background:#e3f2fd; padding:15px; border-radius:10px; text-align:center;}
+
+    table {width:100%; border-collapse:collapse;}
+    th, td {padding:10px; border-bottom:1px solid #ddd; text-align:left;}
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Suporte TI N1</h1>
+</header>
+
+<section class="container">
+  <h2>Abrir Chamado</h2>
+  <div class="contact-box">
+    <form action="https://formspree.io/f/xzdyyvej" method="POST">
+      <input type="text" name="nome" placeholder="Seu nome" required>
+      <input type="email" name="email" placeholder="Seu email (opcional)">
+      <textarea name="mensagem" placeholder="Descreva seu problema" required></textarea>
+      <button class="btn" type="submit">Enviar</button>
+    </form>
+  </div>
+</section>
+
+<section class="container">
+  <h2>Dashboard de Chamados</h2>
+  <div style="text-align:center; margin-bottom:15px;">
+    <button class="btn" onclick="abrirPainel()">Acessar Painel</button>
+  </div>
+
+  <div id="painel" style="display:none;">
+
+    <div class="dashboard">
+
+      <div class="stats">
+        <div class="stat">Total<br><strong id="total"></strong></div>
+        <div class="stat">Abertos<br><strong id="abertos"></strong></div>
+        <div class="stat">Em Atendimento<br><strong id="andamento"></strong></div>
+        <div class="stat">Finalizados<br><strong id="finalizados"></strong></div>
+      </div>
+
+      <input type="text" id="busca" placeholder="Buscar por nome ou problema" onkeyup="listarChamados()">
+      <select id="filtro" onchange="listarChamados()">
+        <option value="">Todos</option>
+        <option value="Aberto">Aberto</option>
+        <option value="Em atendimento">Em atendimento</option>
+        <option value="Finalizado">Finalizado</option>
+      </select>
+
+      <br><br>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Data</th>
+            <th>Nome</th>
+            <th>Problema</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="listaChamados"></tbody>
+      </table>
+
+    </div>
+  </div>
+</section>
+
+<script>
+function gerarId(){
+  let seq = parseInt(localStorage.getItem('ticket_seq') || '0') + 1;
+  localStorage.setItem('ticket_seq', seq);
+  return 'TCK-' + String(seq).padStart(5,'0');
+}
+
+function salvarLocal(id,nome,email,mensagem){
+  let chamados = JSON.parse(localStorage.getItem('chamados') || '[]');
+  chamados.push({id,nome,email,mensagem,data:new Date().toLocaleString(),status:'Aberto'});
+  localStorage.setItem('chamados', JSON.stringify(chamados));
+}
+
+function listarChamados(){
+  let chamados = JSON.parse(localStorage.getItem('chamados') || '[]');
+  let busca = document.getElementById('busca').value.toLowerCase();
+  let filtro = document.getElementById('filtro').value;
+
+  let html='';
+  let total=0, abertos=0, andamento=0, finalizados=0;
+
+  chamados.forEach((c,i)=>{
+    if((!busca || c.nome.toLowerCase().includes(busca) || c.mensagem.toLowerCase().includes(busca))
+    && (!filtro || c.status===filtro)){
+
+      html += `<tr>
+        <td>${c.id}</td>
+        <td>${c.data}</td>
+        <td>${c.nome}</td>
+        <td>${c.mensagem}</td>
+        <td>
+          <select onchange="alterarStatus(${i}, this.value)">
+            <option ${c.status=='Aberto'?'selected':''}>Aberto</option>
+            <option ${c.status=='Em atendimento'?'selected':''}>Em atendimento</option>
+            <option ${c.status=='Finalizado'?'selected':''}>Finalizado</option>
+          </select>
+        </td>
+      </tr>`;
+    }
+
+    total++;
+    if(c.status==='Aberto') abertos++;
+    if(c.status==='Em atendimento') andamento++;
+    if(c.status==='Finalizado') finalizados++;
+  });
+
+  document.getElementById('listaChamados').innerHTML = html;
+  document.getElementById('total').innerText = total;
+  document.getElementById('abertos').innerText = abertos;
+  document.getElementById('andamento').innerText = andamento;
+  document.getElementById('finalizados').innerText = finalizados;
+}
+
+function alterarStatus(i,status){
+  let chamados = JSON.parse(localStorage.getItem('chamados') || '[]');
+  chamados[i].status = status;
+  localStorage.setItem('chamados', JSON.stringify(chamados));
+  listarChamados();
+}
+
+function abrirPainel(){
+  const senha = prompt('Digite a senha do painel:');
+  if(senha === 'admin123'){
+    document.getElementById('painel').style.display='block';
+    listarChamados();
+  } else {
+    alert('Senha incorreta');
+  }
+}
+
+const form = document.querySelector('form');
+form.addEventListener('submit', async function(e){
+  e.preventDefault();
+
+  const nome = form.nome.value;
+  const email = form.email.value;
+  const mensagem = form.mensagem.value;
+
+  const id = gerarId();
+  salvarLocal(id,nome,email,mensagem);
+
+  try {
+    const formData = new FormData(form);
+    formData.append('ticket_id', id);
+
+    await fetch(form.action, {
+      method: 'POST',
+      body: formData,
+      headers: { 'Accept': 'application/json' }
+    });
+
+    form.reset();
+    alert('Chamado enviado! ID: ' + id);
+
+  } catch {
+    alert('Erro ao enviar');
+  }
+});
+</script>
+
+</body>
+</html>
